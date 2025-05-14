@@ -54,4 +54,4 @@ pub struct ClaimReward<'info> {
     pub reward_vault: Account<'info, RewardVault>,
     #[account(mut)]
     pub participant: Signer<'info>,
-} 
+}

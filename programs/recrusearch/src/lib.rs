@@ -6,14 +6,18 @@ pub mod state;
 pub mod contexts;
 
 // Re-export context types at the crate root for easy access
-pub use self::contexts::{
-    InitializeStudy,
-    CloseStudy,
-    RegisterParticipant,
-    GiveConsent,
-    RevokeConsent,
-    ClaimReward,
-};
+//pub use self::contexts::{
+    //InitializeStudy,
+    //CloseStudy,
+    //RegisterParticipant,
+    //GiveConsent,
+    //vokeConsent,
+    //mReward,
+//};
+
+use crate::instructions::*;
+use crate:: state::*;
+use crate::contexts::*;
 
 declare_id!("DFTY5PLAqv4NHce8Wsh6v11efdobnAAW5SvLHq3HQ3J3");
 

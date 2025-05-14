@@ -16,7 +16,10 @@ no-idl = []
 no-log-ix-name = []
 idl-build = ["anchor-lang/idl-build"]
 
-
 [dependencies]
 anchor-lang = "0.31.1"
+anchor-spl = "0.31.1"
+
+[profile.release]
+overflow-checks = true
 

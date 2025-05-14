@@ -21,7 +21,7 @@ pub struct CloseStudy<'info> {
 
 #[derive(Accounts)]
 pub struct RegisterParticipant<'info> {
-    #[account(init, payer = wallet, space = 8 + 32 + 64)]
+    #[account(init, payer = wallet, space = 8 + 32 + 64 + 64)]
     pub participant: Account<'info, Participant>,
     #[account(mut)]
     pub wallet: Signer<'info>,
@@ -30,12 +30,15 @@ pub struct RegisterParticipant<'info> {
 
 #[derive(Accounts)]
 pub struct GiveConsent<'info> {
-    #[account(init, payer = participant, space = 8 + 32 + 32 + 8 + 1)]
+    #[account(init, payer = participant, space = 8 + 32 + 32 + 8 + 1 + 32)]
     pub consent: Account<'info, Consent>,
     #[account(mut)]
     pub participant: Signer<'info>,
     #[account(mut)]
     pub study: Account<'info, Study>,
+    /// CHECK: Mint account for NFT consent
+    #[account(mut)]
+    pub mint: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -54,4 +57,12 @@ pub struct ClaimReward<'info> {
     pub reward_vault: Account<'info, RewardVault>,
     #[account(mut)]
     pub participant: Signer<'info>,
+    /// CHECK: Token program for SPL transfer
+    pub token_program: UncheckedAccount<'info>,
+    /// CHECK: Associated token account for participant
+    #[account(mut)]
+    pub participant_token_account: UncheckedAccount<'info>,
+    /// CHECK: Associated token account for vault
+    #[account(mut)]
+    pub vault_token_account: UncheckedAccount<'info>,
 }

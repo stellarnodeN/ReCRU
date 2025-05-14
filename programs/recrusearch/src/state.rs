@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[account]
+/// Represents a research study with associated metadata and reward information.
 pub struct Study {
     pub researcher: Pubkey,
     pub ipfs_cid: String,
@@ -19,17 +20,21 @@ impl Study {
 }
 
 #[account]
+/// Represents a participant in a study, including optional off-chain credentials.
 pub struct Participant {
     pub wallet: Pubkey,
     pub ipfs_cid: String,
+    pub credentials_cid: Option<String>, // Optional off-chain credentials
 }
 
 #[account]
+/// Represents consent given by a participant for a study, with optional NFT-based consent.
 pub struct Consent {
     pub participant: Pubkey,
     pub study: Pubkey,
     pub timestamp: i64,
     pub active: bool,
+    pub mint: Option<Pubkey>, // NFT mint address for consent
 }
 
 impl Consent {
@@ -42,6 +47,7 @@ impl Consent {
 }
 
 #[account]
+/// Represents a vault holding rewards for a study.
 pub struct RewardVault {
     pub study: Pubkey,
     pub balance: u64,
@@ -51,4 +57,4 @@ impl RewardVault {
     pub fn has_balance(&self) -> bool {
         self.balance > 0
     }
-} 
+}

@@ -42,8 +42,9 @@ pub mod recrusearch {
     pub fn register_participant(
         ctx: Context<RegisterParticipant>,
         ipfs_cid: String,
+        credentials_cid: Option<String>,
     ) -> Result<()> {
-        instructions::register_participant(ctx, ipfs_cid)
+        instructions::register_participant(ctx, ipfs_cid, credentials_cid)
     }
 
     pub fn give_consent(

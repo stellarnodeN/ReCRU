@@ -1,4 +1,4 @@
-# Recrusearch
+# RecruSearch
 
 A Solana Anchor-based program and web application for managing studies, participants, and rewards using NFTs and SPL tokens.
 

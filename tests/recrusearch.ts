@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Recrusearch } from "../target/types/recrusearch";
 import { assert } from "chai";
+import { TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, getAccount } from "@solana/spl-token";
 
 describe("recrusearch", () => {
   // Configure the client to use the local cluster.
@@ -184,10 +185,171 @@ describe("recrusearch", () => {
   });
 
   it("Can claim reward (SPL transfer logic)", async () => {
-    // This test would require full SPL token setup and is best done in a full integration test suite
-    // Placeholder: just ensure the method can be called after proper setup
-    // (You can expand this with @solana/spl-token helpers and real token accounts)
-    assert.isTrue(true, "SPL transfer logic placeholder");
+    // Setup: create study, participant, mint, and token accounts
+    const study = anchor.web3.Keypair.generate();
+    const rewardVault = anchor.web3.Keypair.generate();
+    const participant = anchor.web3.Keypair.generate();
+    const ipfsCid = "QmTestParticipantProfile";
+    const credentialsCid = null;
+    const rewardAmount = new anchor.BN(1000);
+
+    // Create mint
+    const mint = await createMint(
+      provider.connection,
+      researcher.payer,
+      researcher.publicKey,
+      null,
+      0 // decimals
+    );
+
+    // Create associated token accounts
+    const rewardVaultTokenAccount = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      researcher.payer,
+      mint,
+      rewardVault.publicKey,
+      true
+    );
+    const participantTokenAccount = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      researcher.payer,
+      mint,
+      participant.publicKey
+    );
+
+    // Mint tokens to reward vault
+    await mintTo(
+      provider.connection,
+      researcher.payer,
+      mint,
+      rewardVaultTokenAccount.address,
+      researcher.publicKey,
+      1000
+    );
+
+    // Initialize study
+    await program.methods
+      .initializeStudy("QmTestStudyMeta", rewardAmount)
+      .accounts({
+        study: study.publicKey,
+        rewardVault: rewardVault.publicKey,
+        researcher: researcher.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([study, rewardVault])
+      .rpc();
+
+    // Airdrop to participant
+    const airdropSig = await provider.connection.requestAirdrop(participant.publicKey, 1e9);
+    await provider.connection.confirmTransaction(airdropSig);
+    await program.methods
+      .registerParticipant(ipfsCid, credentialsCid)
+      .accounts({
+        participant: participant.publicKey,
+        wallet: participant.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([participant])
+      .rpc();
+
+    // Give consent (fetch PDA for consent)
+    const [consentPda] = await anchor.web3.PublicKey.findProgramAddress(
+      [Buffer.from("consent"), participant.publicKey.toBuffer(), study.publicKey.toBuffer()],
+      program.programId
+    );
+    await program.methods
+      .giveConsent()
+      .accounts({
+        consent: consentPda,
+        participant: participant.publicKey,
+        study: study.publicKey,
+        mint: mint,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([participant])
+      .rpc();
+
+    // Claim reward
+    await program.methods
+      .claimReward()
+      .accounts({
+        consent: consentPda,
+        rewardVault: rewardVault.publicKey,
+        participant: participant.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        participantTokenAccount: participantTokenAccount.address,
+        vaultTokenAccount: rewardVaultTokenAccount.address,
+      })
+      .signers([participant])
+      .rpc();
+
+    // Check balances
+    const vaultAccountInfo = await getAccount(provider.connection, rewardVaultTokenAccount.address);
+    const participantAccountInfo = await getAccount(provider.connection, participantTokenAccount.address);
+    assert.equal(Number(vaultAccountInfo.amount), 0);
+    assert.equal(Number(participantAccountInfo.amount), 1000);
+  });
+
+  it("Can revoke consent using PDA", async () => {
+    // Setup: create study and participant
+    const study = anchor.web3.Keypair.generate();
+    const rewardVault = anchor.web3.Keypair.generate();
+    const participant = anchor.web3.Keypair.generate();
+    const ipfsCid = "QmTestParticipantProfile";
+    const credentialsCid = null;
+    const rewardAmount = new anchor.BN(1000);
+    const mint = anchor.web3.Keypair.generate();
+
+    await program.methods
+      .initializeStudy("QmTestStudyMeta", rewardAmount)
+      .accounts({
+        study: study.publicKey,
+        rewardVault: rewardVault.publicKey,
+        researcher: researcher.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([study, rewardVault])
+      .rpc();
+
+    const airdropSig = await provider.connection.requestAirdrop(participant.publicKey, 1e9);
+    await provider.connection.confirmTransaction(airdropSig);
+    await program.methods
+      .registerParticipant(ipfsCid, credentialsCid)
+      .accounts({
+        participant: participant.publicKey,
+        wallet: participant.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([participant])
+      .rpc();
+
+    // Give consent (fetch PDA for consent)
+    const [consentPda] = await anchor.web3.PublicKey.findProgramAddress(
+      [Buffer.from("consent"), participant.publicKey.toBuffer(), study.publicKey.toBuffer()],
+      program.programId
+    );
+    await program.methods
+      .giveConsent()
+      .accounts({
+        consent: consentPda,
+        participant: participant.publicKey,
+        study: study.publicKey,
+        mint: mint.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([participant, mint])
+      .rpc();
+
+    // Revoke consent
+    await program.methods
+      .revokeConsent()
+      .accounts({
+        consent: consentPda,
+        participant: participant.publicKey,
+      })
+      .signers([participant])
+      .rpc();
+    // Optionally, fetch the consent account and assert revoked status if your program supports it
   });
 
   it("Prevents double consent for the same participant and study", async () => {

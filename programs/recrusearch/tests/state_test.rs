@@ -6,7 +6,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_study_status() {
+    fn test_study_status_methods() {
         let study = Study {
             researcher: Pubkey::default(),
             ipfs_cid: "cid".to_string(),
@@ -14,6 +14,7 @@ mod tests {
             reward_amount: 100,
             status: 0,
         };
+        // Assuming is_open and is_closed are implemented
         assert!(study.is_open());
         assert!(!study.is_closed());
         let closed_study = Study { status: 1, ..study };
@@ -22,7 +23,7 @@ mod tests {
     }
 
     #[test]
-    fn test_consent_status() {
+    fn test_consent_status_methods() {
         let consent = Consent {
             participant: Pubkey::default(),
             study: Pubkey::default(),
@@ -38,7 +39,7 @@ mod tests {
     }
 
     #[test]
-    fn test_participant_credentials() {
+    fn test_participant_credentials_field() {
         let participant = Participant {
             wallet: Pubkey::default(),
             ipfs_cid: "cid".to_string(),

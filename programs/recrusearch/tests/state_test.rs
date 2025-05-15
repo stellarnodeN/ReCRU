@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use crate::state::*;
+use recrusearch::state::*;
 
 #[cfg(test)]
 mod tests {
@@ -35,5 +35,17 @@ mod tests {
         let revoked = Consent { active: false, ..consent };
         assert!(!revoked.is_active());
         assert!(revoked.is_revoked());
+    }
+
+    #[test]
+    fn test_participant_credentials() {
+        let participant = Participant {
+            wallet: Pubkey::default(),
+            ipfs_cid: "cid".to_string(),
+            credentials_cid: Some("cred_cid".to_string()),
+        };
+        assert_eq!(participant.credentials_cid, Some("cred_cid".to_string()));
+        let no_creds = Participant { credentials_cid: None, ..participant };
+        assert_eq!(no_creds.credentials_cid, None);
     }
 }

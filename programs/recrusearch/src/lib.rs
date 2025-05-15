@@ -16,7 +16,7 @@ pub mod contexts;
 //};
 
 use crate::instructions::*;
-use crate:: state::*;
+use crate::state::*;
 use crate::contexts::*;
 
 declare_id!("DFTY5PLAqv4NHce8Wsh6v11efdobnAAW5SvLHq3HQ3J3");

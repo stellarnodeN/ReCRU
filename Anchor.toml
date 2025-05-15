@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-recrusearch = "DFTY5PLAqv4NHce8Wsh6v11efdobnAAW5SvLHq3HQ3J3"
+recrusearch = "BhhhwTvpZc2XNB439WQyX3gyiw3VJzwKtDUFFXy5rGYy"
 
 [registry]
 url = "https://api.apr.dev"
@@ -17,3 +17,6 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[test]
+startup_wait = 10000
